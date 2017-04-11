@@ -1,10 +1,24 @@
 import React, { Component } from 'react';
-import { View, Text, TextInput, Button, AsyncStorage, Alert } from 'react-native';
+import { View, Text, TextInput, Button, AsyncStorage, Alert, Image, TouchableOpacity } from 'react-native';
+
 import { Actions } from 'react-native-router-flux';
 import GlobalStyles from '../classes/Styles';
+const ImagePicker = require('react-native-image-picker');
 const MemberController = require('../controllers/MemberController');
 const Member = require('../classes/Member');
 const _ = require('lodash');
+
+var options = {
+  title: 'Select Avatar',
+  customButtons: [
+    {name: 'fb', title: 'Choose Photo from Facebook'},
+  ],
+  storageOptions: {
+    skipBackup: true,
+    path: 'images'
+  }
+};
+
 
 export default class MemberPage extends Component {
   constructor () {
@@ -13,12 +27,53 @@ export default class MemberPage extends Component {
     this.state = {
       firstName: '',
       lastName: '',
-      email: ''
+      email: '',
+      avatar: {
+        uri: 'https://lelakisihat.com/wp-content/uploads/2016/09/avatar.jpg'
+      }
     };
     this.addNewMember = () => {
       let newMem = new Member(this.state);
       return MemberCtrl.create(newMem).then( () => {
         Actions.Members();
+      });
+    }
+
+    this.options = {
+      title: 'Select Avatar',
+      customButtons: [
+        {name: 'fb', title: 'Choose Photo from Facebook'},
+      ],
+      storageOptions: {
+        skipBackup: true,
+        path: 'images'
+      }
+    };
+
+
+    this.openCamera = () => {
+      ImagePicker.showImagePicker(options, (response) => {
+        console.log('Response = ', response);
+
+        if (response.didCancel) {
+          console.log('User cancelled image picker');
+        }
+        else if (response.error) {
+          console.log('ImagePicker Error: ', response.error);
+        }
+        else if (response.customButton) {
+          console.log('User tapped custom button: ', response.customButton);
+        }
+        else {
+          let source = { uri: response.uri };
+
+          // You can also display the image using data:
+          // let source = { uri: 'data:image/jpeg;base64,' + response.data };
+
+          this.setState({
+            avatar: source
+          });
+        }
       });
     }
   }
@@ -29,6 +84,7 @@ export default class MemberPage extends Component {
       this.state.firstName = this.props.member.firstName;
       this.state.lastName = this.props.member.lastName;
       this.state.email = this.props.member.email;
+      this.state.avatar = this.props.member.avatar;
       // console.log(this.props.member);
     }
   }
@@ -48,8 +104,14 @@ export default class MemberPage extends Component {
                         backgroundColor: '#dddddd',
                         borderRadius: 100,
                         marginBottom: 30
-                      }}></View>
+                      }}>
+                      <TouchableOpacity onPress={this.openCamera}>
+                        <Image source={this.state.avatar} style={{width: 200, height: 200, borderRadius: 200}} />
+                      </TouchableOpacity>
+          </View>
+
         </View>
+
         <View style={{flexDirection: 'row'}}>
           <View style={{flex: 1, flexDirection: 'column'}}>
             <Text>First Name</Text>
@@ -85,4 +147,5 @@ export default class MemberPage extends Component {
       </View>
     )
   }
+
 }
